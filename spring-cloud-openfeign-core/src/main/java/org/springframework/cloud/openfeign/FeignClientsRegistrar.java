@@ -53,6 +53,7 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ * 用来扫描@FeignClient和@EnableFeignClients注解
  * @author Spencer Gibb
  * @author Jakub Narloch
  * @author Venil Noronha
@@ -79,17 +80,21 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 	@Override
 	public void registerBeanDefinitions(AnnotationMetadata metadata,
 			BeanDefinitionRegistry registry) {
+		//注册configuration
 		registerDefaultConfiguration(metadata, registry);
+		//注册注解
 		registerFeignClients(metadata, registry);
 	}
 
 	private void registerDefaultConfiguration(AnnotationMetadata metadata,
 			BeanDefinitionRegistry registry) {
+		//获取注解@EnableFeignClients 下设置的属性值
 		Map<String, Object> defaultAttrs = metadata
 				.getAnnotationAttributes(EnableFeignClients.class.getName(), true);
 
 		if (defaultAttrs != null && defaultAttrs.containsKey("defaultConfiguration")) {
 			String name;
+			//判断传入的defaultConfiguration的是不是topClass，所谓topClass就是说此类不是别的类的内部类
 			if (metadata.hasEnclosingClass()) {
 				name = "default." + metadata.getEnclosingClassName();
 			}
@@ -110,15 +115,20 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 
 		Map<String, Object> attrs = metadata
 				.getAnnotationAttributes(EnableFeignClients.class.getName());
+		// 扫描带有FeignClient注解的类
 		AnnotationTypeFilter annotationTypeFilter = new AnnotationTypeFilter(
 				FeignClient.class);
+		//获取@EnableFeignClients 中clients的值
 		final Class<?>[] clients = attrs == null ? null
 				: (Class<?>[]) attrs.get("clients");
 		if (clients == null || clients.length == 0) {
+			//如果没有设置，那么加入要扫描的注解和扫描的包
 			scanner.addIncludeFilter(annotationTypeFilter);
+			// 确定扫描的包路径列表
 			basePackages = getBasePackages(metadata);
 		}
 		else {
+			//如果设置了，最终扫出来的Bean必须是注解中设置的那些
 			final Set<String> clientClasses = new HashSet<>();
 			basePackages = new HashSet<>();
 			for (Class<?> clazz : clients) {
@@ -135,7 +145,7 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 			scanner.addIncludeFilter(
 					new AllTypeFilter(Arrays.asList(filter, annotationTypeFilter)));
 		}
-
+		//循环扫描，并把根据注解信息，进行相关注册
 		for (String basePackage : basePackages) {
 			Set<BeanDefinition> candidateComponents = scanner
 					.findCandidateComponents(basePackage);
@@ -144,6 +154,7 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 					// verify annotated class is an interface
 					AnnotatedBeanDefinition beanDefinition = (AnnotatedBeanDefinition) candidateComponent;
 					AnnotationMetadata annotationMetadata = beanDefinition.getMetadata();
+					//必须注解在interface上
 					Assert.isTrue(annotationMetadata.isInterface(),
 							"@FeignClient can only be specified on an interface");
 
@@ -167,6 +178,7 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 		BeanDefinitionBuilder definition = BeanDefinitionBuilder
 				.genericBeanDefinition(FeignClientFactoryBean.class);
 		validate(attributes);
+		//将属性设置到FeignClientFactoryBean 中
 		definition.addPropertyValue("url", getUrl(attributes));
 		definition.addPropertyValue("path", getPath(attributes));
 		String name = getName(attributes);
@@ -175,6 +187,7 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 		definition.addPropertyValue("decode404", attributes.get("decode404"));
 		definition.addPropertyValue("fallback", attributes.get("fallback"));
 		definition.addPropertyValue("fallbackFactory", attributes.get("fallbackFactory"));
+		//设置Autowire 类型
 		definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
 
 		String alias = name + "FeignClient";
@@ -188,7 +201,7 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 		if (StringUtils.hasText(qualifier)) {
 			alias = qualifier;
 		}
-
+		//注册bean
 		BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, className,
 				new String[] { alias });
 		BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
@@ -299,7 +312,9 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 			@Override
 			protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
 				boolean isCandidate = false;
+				//判断当前类/接口是否是独立的，独立的class即此类是top class或者静态内部类 nested class
 				if (beanDefinition.getMetadata().isIndependent()) {
+					//并且不是注解
 					if (!beanDefinition.getMetadata().isAnnotation()) {
 						isCandidate = true;
 					}
@@ -367,10 +382,12 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 
 	private void registerClientConfiguration(BeanDefinitionRegistry registry, Object name,
 			Object configuration) {
+		//加载FeignClientSpecification bean
 		BeanDefinitionBuilder builder = BeanDefinitionBuilder
 				.genericBeanDefinition(FeignClientSpecification.class);
 		builder.addConstructorArgValue(name);
 		builder.addConstructorArgValue(configuration);
+		//注册
 		registry.registerBeanDefinition(
 				name + "." + FeignClientSpecification.class.getSimpleName(),
 				builder.getBeanDefinition());

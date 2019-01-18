@@ -23,6 +23,7 @@ import feign.Target;
 /**
  * @author Spencer Gibb
  */
+//根据动态代理生成对象
 interface Targeter {
 	<T> T target(FeignClientFactoryBean factory, Feign.Builder feign, FeignContext context,
 				 Target.HardCodedTarget<T> target);

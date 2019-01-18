@@ -59,6 +59,7 @@ import feign.Param;
  * @author Spencer Gibb
  * @author Abhijit Sarkar
  */
+//用来支持Spring MVC注解
 public class SpringMvcContract extends Contract.BaseContract
 		implements ResourceLoaderAware {
 

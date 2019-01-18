@@ -84,6 +84,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean,
 		FeignLoggerFactory loggerFactory = get(context, FeignLoggerFactory.class);
 		Logger logger = loggerFactory.create(this.type);
 
+		//获取FeignClientsConfiguration 中注册的bean ，设置到feign中
 		// @formatter:off
 		Feign.Builder builder = get(context, Feign.Builder.class)
 				// required values
@@ -99,9 +100,11 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean,
 	}
 
 	protected void configureFeign(FeignContext context, Feign.Builder builder) {
+		//获取.properties的属性
 		FeignClientProperties properties = applicationContext.getBean(FeignClientProperties.class);
 		if (properties != null) {
 			if (properties.isDefaultToProperties()) {
+				//默认为true
 				configureUsingConfiguration(context, builder);
 				configureUsingProperties(properties.getConfig().get(properties.getDefaultConfig()), builder);
 				configureUsingProperties(properties.getConfig().get(this.name), builder);
@@ -115,6 +118,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean,
 		}
 	}
 
+	//获取用户通过configuration @Bean的自定义配置
 	protected void configureUsingConfiguration(FeignContext context, Feign.Builder builder) {
 		Logger.Level level = getOptional(context, Logger.Level.class);
 		if (level != null) {
@@ -128,6 +132,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean,
 		if (errorDecoder != null) {
 			builder.errorDecoder(errorDecoder);
 		}
+		//connectTimeoutMillis和readTimeoutMillis的默认值
 		Request.Options options = getOptional(context, Request.Options.class);
 		if (options != null) {
 			builder.options(options);
@@ -143,6 +148,12 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean,
 		}
 	}
 
+
+    /***
+     *
+     * @param config 获取.properties中配置的bean
+     * @param builder feign
+     */
 	protected void configureUsingProperties(FeignClientProperties.FeignClientConfiguration config, Feign.Builder builder) {
 		if (config == null) {
 			return;
@@ -151,7 +162,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean,
 		if (config.getLoggerLevel() != null) {
 			builder.logLevel(config.getLoggerLevel());
 		}
-
+		//设置connectTimeoutMillis和readTimeoutMillis的值，这里的属性值来自于.properties配置的
 		if (config.getConnectTimeout() != null && config.getReadTimeout() != null) {
 			builder.options(new Request.Options(config.getConnectTimeout(), config.getReadTimeout()));
 		}
@@ -241,6 +252,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean,
 		Feign.Builder builder = feign(context);
 
 		if (!StringUtils.hasText(this.url)) {
+			//如果没有指定url,获取name值
 			String url;
 			if (!this.name.startsWith("http")) {
 				url = "http://" + this.name;
@@ -259,6 +271,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean,
 		Client client = getOptional(context, Client.class);
 		if (client != null) {
 			if (client instanceof LoadBalancerFeignClient) {
+				//使用ribbon提供的负载均衡
 				// not load balancing because we have a url,
 				// but ribbon is on the classpath, so unwrap
 				client = ((LoadBalancerFeignClient)client).getDelegate();

@@ -49,6 +49,7 @@ import feign.hystrix.HystrixFeign;
 import feign.optionals.OptionalDecoder;
 
 /**
+ * feign 的默认配置
  * @author Dave Syer
  * @author Venil Noronha
  */

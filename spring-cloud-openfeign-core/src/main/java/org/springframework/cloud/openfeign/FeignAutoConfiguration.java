@@ -59,6 +59,9 @@ import javax.annotation.PreDestroy;
 @EnableConfigurationProperties({FeignClientProperties.class, FeignHttpClientProperties.class})
 public class FeignAutoConfiguration {
 
+	/**
+	 * 用来加载customer configuration 注解@EnableFeignClients 里defaultConfiguration属性
+	 */
 	@Autowired(required = false)
 	private List<FeignClientSpecification> configurations = new ArrayList<>();
 

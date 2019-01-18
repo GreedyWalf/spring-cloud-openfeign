@@ -9,7 +9,7 @@
 	{
 		"name": "feign.httpclient.enabled",
 		"type": "java.lang.Boolean",
-		"description": "Enables the use of the Apache HTTP Client by Feign.",
+		"description": "Enables the use of the Apache HTTP Client by Feign.用作HttpClientFeignLoadBalancedConfiguration.",
 		"defaultValue": "true"
 	},
 	{
