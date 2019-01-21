@@ -81,10 +81,11 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean,
 	}
 
 	protected Feign.Builder feign(FeignContext context) {
+		//获取FeignClientsConfiguration 中注册的bean ，设置到feign中
 		FeignLoggerFactory loggerFactory = get(context, FeignLoggerFactory.class);
 		Logger logger = loggerFactory.create(this.type);
 
-		//获取FeignClientsConfiguration 中注册的bean ，设置到feign中
+
 		// @formatter:off
 		Feign.Builder builder = get(context, Feign.Builder.class)
 				// required values
@@ -249,10 +250,11 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean,
 	 */
 	<T> T getTarget() {
 		FeignContext context = applicationContext.getBean(FeignContext.class);
+		//获取一个默认的builder
 		Feign.Builder builder = feign(context);
 
 		if (!StringUtils.hasText(this.url)) {
-			//如果没有指定url,获取name值
+			//如果没有指定url,获取name值拼接默认url
 			String url;
 			if (!this.name.startsWith("http")) {
 				url = "http://" + this.name;

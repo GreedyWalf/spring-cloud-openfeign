@@ -60,7 +60,7 @@ import javax.annotation.PreDestroy;
 public class FeignAutoConfiguration {
 
 	/**
-	 * 用来加载customer configuration 注解@EnableFeignClients 里defaultConfiguration属性
+	 * 用来加载customer configuration 注解@EnableFeignClients 里defaultConfiguration属性或者是@FeignClient 里的configuration属性
 	 */
 	@Autowired(required = false)
 	private List<FeignClientSpecification> configurations = new ArrayList<>();
